@@ -1,0 +1,48 @@
+@staticmethod  it is a decorator that can be applied to a method to indicate that it does not require an instance of the class to be called. It allows the method to be called on the class itself rather than on an instance of the class.
+
+
+🧩 1. Decorator tích hợp sẵn (Built-in Decorators)
+Decorator	Áp dụng cho	Tham số đầu	Mục đích
+@staticmethod	Method	Không có	Định nghĩa hàm không dùng đến self hay cls
+@classmethod	Method	cls	Định nghĩa hàm cấp class (không dùng đến instance cụ thể)
+@property	Method	self	Cho phép gọi method như thuộc tính (không cần ())
+@functools.lru_cache	Function	-	Cache kết quả hàm theo đầu vào
+@functools.cached_property	Method	self	Cache thuộc tính chỉ tính 1 lần (Python 3.8+)
+@abstractmethod	Method	self	Đánh dấu method là trừu tượng (dùng với abc.ABC)
+
+🧰 2. Decorator tiện ích từ thư viện chuẩn
+Decorator	Mô tả
+@functools.wraps(func)	Bảo toàn metadata (tên, docstring) khi viết decorator tùy chỉnh
+@contextlib.contextmanager	Viết context manager bằng generator (with block)
+@dataclasses.dataclass	Tự động tạo __init__, __repr__, __eq__ cho class dữ liệu
+@typing.final (Python 3.8+)	Đánh dấu method/class là không được override
+@overload (từ typing)	Gợi ý type cho các overload khác nhau
+
+⚠️ 3. Decorator thông báo (meta)
+Decorator	Mục đích
+@deprecated	Đánh dấu hàm không nên dùng nữa (cần thư viện deprecated hoặc tự viết)
+@warnings.warn(...)	(không phải decorator nhưng dùng để cảnh báo trong decorator deprecated)
+
+🧪 4. Decorator cho thử nghiệm / retry
+Decorator	Mô tả
+@retry (tự viết hoặc tenacity)	Tự động thử lại hàm khi gặp lỗi
+@timeout (cần thư viện ngoài)	Giới hạn thời gian chạy hàm
+
+📦 5. Decorator trong lập trình web / async / AI
+Decorator	Framework liên quan	Mục đích
+@app.get(...), @app.post(...)	FastAPI / Flask	Định nghĩa route
+@login_required	Flask / Django	Yêu cầu đăng nhập
+@torch.no_grad()	PyTorch	Tắt tracking gradient
+@tf.function	TensorFlow	Biên dịch function thành graph
+
+📄 6. Tổng kết nhanh theo hành vi
+Decorator	Loại	Có thể dùng cho
+@staticmethod	Built-in	method
+@classmethod	Built-in	method
+@property	Built-in	method
+@cached_property	Cache	method
+@lru_cache	Cache	function
+@deprecated	Meta	function/method
+@contextmanager	Context	generator
+@wraps	Utility	decorator
+@dataclass	Meta	class

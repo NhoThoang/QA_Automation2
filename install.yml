@@ -1,0 +1,4 @@
+python -m weditor
+pip install setuptools
+pip install uiautomator2
+pip install weditor

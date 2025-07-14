@@ -1,0 +1,120 @@
+📦 Quản lý ứng dụng
+app_info(pkg_name) – lấy thông tin về app: tên chính, label, version, kích thước 
+developer.android.com
++15
+uiautomator2.readthedocs.io
++15
+docs.deque.com
++15
+
+app_install(url, installing_callback=None) – cài app từ URL, trả về package name 
+uiautomator2.readthedocs.io
+
+app_list(filter=None) – liệt kê các app với bộ lọc (như -d, -e…) 
+uiautomator2.readthedocs.io
+
+app_list_running() – liệt kê app đang chạy 
+uiautomator2.readthedocs.io
+
+app_start(package_name, activity=None, extras={}, wait=False, stop=False, unlock=False, launch_timeout=None, use_monkey=False) – bật app với nhiều tuỳ chọn 
+uiautomator2.readthedocs.io
+
+app_stop(pkg_name) – dừng app 
+stackoverflow.com
+
+app_stop_all(excludes=[]) – dừng tất cả app bên thứ ba, ngoại trừ danh sách loại trừ 
+stackoverflow.com
++3
+uiautomator2.readthedocs.io
++3
+developer.android.com
++3
+
+app_uninstall(pkg_name) – gỡ cài đặt app, trả về bool 
+uiautomator2.readthedocs.io
+
+app_uninstall_all(excludes=[], verbose=False) – gỡ toàn bộ app theo điều kiện 
+uiautomator2.readthedocs.io
+
+app_wait(package_name, timeout=20.0, front=False) – chờ app khởi chạy, trả về PID hoặc 0 nếu lỗi 
+uiautomator2.readthedocs.io
++1
+discuss.appium.io
++1
+
+⚙️ Quản lý thiết bị và phiên làm việc
+connect(serial=None) – kết nối tới thiết bị qua u2.connect() (từ Quick Start)
+
+healthcheck() – kiểm tra trạng thái “khoẻ” của thiết bị 
+uiautomator2.readthedocs.io
+
+reset_uiautomator(reason='unknown') – reset dịch vụ uiautomator 
+uiautomator2.readthedocs.io
++1
+github.com
++1
+
+disable_popups(enable=True) – tự động bấm vào các popup (chức năng có thể lỗi)
+
+hooks_register(func) – đăng ký callback cho các hooks
+
+hooks_apply(stage, func_name, args=(), kwargs={}, ret=None) – áp dụng hook ở giai đoạn “before” hoặc “after” 
+uiautomator2.readthedocs.io
+
+session(pkg_name=None, attach=False, launch_timeout=None, strict=False) – tạo hoặc attach session app 
+uiautomator2.readthedocs.io
++1
+developer.android.com
++1
+
+set_new_command_timeout(timeout) – đặt thời gian chờ lệnh mới (mặc định 3 phút) 
+uiautomator2.readthedocs.io
+
+🖼️ File, màn hình, và dịch vụ
+screenshot(*args, **kwargs) – chụp ảnh màn hình trả về PIL.Image
+
+pull(src, dst) – kéo file từ thiết bị về local 
+uiautomator2.readthedocs.io
+
+pull_content(src) – đọc nội dung file trả về bytes 
+uiautomator2.readthedocs.io
+
+push(src, dst, mode=420) – đẩy file từ local lên thiết bị 
+uiautomator2.readthedocs.io
+
+push_url(url, dst, mode=420) – đẩy file từ url lên thiết bị 
+uiautomator2.readthedocs.io
+
+request_agent(relative_url, method='get', timeout=60.0) – gửi HTTP request tới atx-agent 
+uiautomator2.readthedocs.io
+
+service(name) – quản lý service (start/stop) như uiautomator 
+uiautomator2.readthedocs.io
+
+🔧 Gọi JSON-RPC và các tiện ích kỹ thuật
+jsonrpc_call(method, params=[], http_timeout=60) – gọi JSON‑RPC tới server trên device 
+uiautomator2.readthedocs.io
+
+jsonrpc object – hỗ trợ viết gọn như d.jsonrpc.pressKey("home") 
+uiautomator2.readthedocs.io
++1
+developer.android.com
++1
+
+📲 Các thao tác trên UI (qua server atx-agent)
+Ngoài methods bên trên, bạn còn có thể sử dụng các lệnh mobile gestures thông qua Appium hoặc JSON-RPC như:
+
+mobile: clickGesture, mobile: longClickGesture, mobile: doubleClickGesture
+
+mobile: dragGesture, mobile: flingGesture, mobile: scrollGesture, mobile: swipeGesture
+
+mobile: pinchOpenGesture, mobile: pinchCloseGesture
+(với đối số như elementId, x, y, direction, percent, speed, v.v.) 
+appium.readthedocs.io
++5
+appium.github.io
++5
+appium.github.io
++5
+
+Đây là những API tập trung cho driver UiAutomator2 để mô phỏng thao tác cảm ứng.
