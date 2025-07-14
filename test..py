@@ -96,7 +96,7 @@ d.set_clipboard('hello-world', 'label')
 
 # Get clipboard
 # Depends on input method (com.github.uiautomator/.AdbKeyboard)
-d.set_input_ime()
+d.set_input_ime("com.github.uiautomator/.AdbKeyboard") # Set input method to AdbKeyboard
 print(d.clipboard)
 
 d.screen_on() # turn on the screen
@@ -155,3 +155,12 @@ d.swipe_ext(Direction.BACKWARD) # Scroll up page
 d.swipe_ext(Direction.HORIZ_FORWARD) # Scroll page horizontally right
 d.swipe_ext(Direction.HORIZ_BACKWARD) # Scroll page horizontally left
 d.get_text() # Get text from the current focused element
+activity = d.current_app() # Get current app package name
+print(activity) # Output: com.example.app
+curent_screen = d.screenshot() # Take a screenshot, returns PIL Image object
+curent_screen.save("screenshot.png") # Save screenshot to file
+curent_activity = d.current_app() # Get current app package name
+print(curent_activity) # Output: com.example.app
+# scroll up and down
+d.scroll(steps=10) # Scroll down 10 steps
+d.scroll(steps=-10) # Scroll up 10 steps
