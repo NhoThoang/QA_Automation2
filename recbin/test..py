@@ -149,7 +149,7 @@ d.swipe_ext("up", scale=0.8)
 
 # Can also use Direction as a parameter
 from uiautomator2 import Direction
-
+d.
 d.swipe_ext(direction="down") # Scroll down page, equivalent to d.swipe_ext("up"), but easier to understand
 d.swipe_ext(Direction.BACKWARD) # Scroll up page
 d.swipe_ext(Direction.HORIZ_FORWARD) # Scroll page horizontally right
