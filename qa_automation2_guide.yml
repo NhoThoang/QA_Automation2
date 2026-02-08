@@ -1,0 +1,55 @@
+✅ Hành động tương tác UI:
+Hàm	Mô tả
+click()	Nhấn vào phần tử UI.
+long_click()	Nhấn giữ lâu vào phần tử.
+clear_text()	Xoá văn bản trong trường nhập.
+set_text(text)	Gõ văn bản vào trường nhập.
+send_keys(text)	Tương tự set_text, gửi văn bản.
+swipe(direction)	Vuốt phần tử theo hướng (up, down, left, right).
+drag_to(obj_or_point)	Kéo phần tử này đến phần tử khác hoặc tọa độ.
+pinch_in() / pinch_out()	Thực hiện thao tác thu nhỏ/phóng to.
+gesture()	Tạo một chuỗi cử chỉ nâng cao.
+
+🔍 Tìm kiếm phần tử liên quan:
+Hàm	Mô tả
+child(selector)	Lấy phần tử con phù hợp selector.
+child_by_text(text)	Lấy phần tử con theo văn bản.
+child_by_description(desc)	Theo mô tả content-desc.
+child_by_instance(index)	Theo thứ tự xuất hiện.
+sibling(selector)	Lấy phần tử anh em kế bên.
+from_parent(selector)	Tìm phần tử con từ cha.
+parent()	Lấy phần tử cha.
+left(), right(), up(), down()	Lấy phần tử kế cận theo hướng.
+
+
+📄 Thông tin phần tử:
+Hàm	Mô tả
+exists()	Kiểm tra phần tử có tồn tại không.
+info	Lấy thông tin phần tử (dict).
+bounds()	Trả về tọa độ khung (Rect).
+center()	Lấy tọa độ trung tâm của phần tử.
+get_text()	Lấy văn bản hiển thị.
+count	Số lượng phần tử match selector.
+
+
+🕐 Hàm chờ (wait):
+Hàm	Mô tả
+wait(timeout=...)	Chờ phần tử xuất hiện.
+wait_gone(timeout=...)	Chờ phần tử biến mất.
+click_exists(timeout=...)	Chờ rồi click nếu phần tử tồn tại.
+click_gone(timeout=...)	Click rồi chờ phần tử biến mất.
+must_wait	Không phải hàm chờ – là thuộc tính nội bộ để kiểm soát việc chờ, ít dùng trực tiếp.
+wait_timeout	Thời gian timeout mặc định cho wait().
+
+📸 Hình ảnh & Cuộn:
+Hàm	Mô tả
+scroll()	Cuộn nội dung để tìm phần tử.
+fling()	Vuốt nhanh (fling) để cuộn.
+screenshot(filename)	Chụp ảnh phần tử.
+
+🔧 Khác:
+Hàm	Mô tả
+selector	Trả về selector của phần tử.
+session	Session hiện tại đang kết nối thiết bị.
+child_selector()	Tạo selector cho phần tử con.
+jsonrpc	Giao tiếp thấp tầng với thiết bị.

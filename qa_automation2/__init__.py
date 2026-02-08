@@ -1,7 +1,7 @@
 from .qautomationcore import *
 import sys
 class qa_connect(qa_automation, adbcore):
-    def __init__(self,device_id=None):
+    def __init__(self,device_id=None, log_dir:str="logs"):
         if device_id:
             self.device =u2.connect(device_id)
         else:
@@ -13,5 +13,5 @@ class qa_connect(qa_automation, adbcore):
                 print("No device connected, please plug the cable into the phone")
                 sys.exit()
         self.device_information = self.device.device_info
-        super().__init__(device=self.device, device_infor=self.device_information)
+        super().__init__(device=self.device, device_infor=self.device_information, log_dir=log_dir)
         self.logger.info(msg=f"Connected model {self.device_information}")

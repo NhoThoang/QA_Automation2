@@ -28,3 +28,10 @@ def get_info_element(element,
     if element:
         return element.info.get(type_get)
     return None
+# def get_all_text_element(element):
+#     """
+#     Get all text from element
+#     """
+#     if element:
+#         return element.info.get("text")
+#     return None
