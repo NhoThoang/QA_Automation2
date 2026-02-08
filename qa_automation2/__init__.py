@@ -1,4 +1,4 @@
-from .qautomationcore import *
+from qa_automation2.qautomationcore import *
 import sys
 class qa_connect(qa_automation, adbcore):
     def __init__(self,device_id=None, log_dir:str="logs"):

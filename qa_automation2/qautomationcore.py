@@ -2,8 +2,8 @@ import time, sys
 from typing import Literal, List
 from uiautomator2 import Direction
 import uiautomator2 as u2
-from .loginfor import setup_logger
-from .adbcore import *
+from qa_automation2.loginfor import setup_logger
+from qa_automation2.adbcore import *
 
 class qa_automation:
     def __init__(self, device:str=None, device_infor: dict=None, log_dir:str="logs"):
@@ -26,9 +26,10 @@ class qa_automation:
         return self.device.shell(command)
 
     def get_info_element(self, element,
-                                type_get:Literal["bounds", "childCount", "className", "contentDescription", "packageName", "resourceName", "text",
-                                    "visibleBounds", "checkable", "checked", "clickable", "enabled", "focusable", "focused", "longClickable", 
-                                    "scrollable", "selected"] = "text")-> str | int | bool | None:
+                                type_get:Literal["bounds", "childCount", "className", "contentDescription",
+                                 "packageName", "resourceName", "text","visibleBounds", "checkable", "checked",
+                                 "clickable", "enabled", "focusable", "focused", "longClickable",
+                                 "scrollable", "selected"] = "text")-> str | int | bool | None:
         """"
         {
             'bounds': {'bottom': 1348, 'left': 39, 'right': 285, 'top': 1005},
@@ -54,27 +55,42 @@ class qa_automation:
             return element.info.get(type_get)
         return None
     def get_all_text_element(self, 
-                             name: str, 
+                             name: str = "", 
                              type_: Literal[
                                  "text", "text_contains", "text_matches", "text_startswith", 
                                  "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
                                  "resource_id", "resource_id_matches", 
                                  "xpath", 
                                  "class_name", "class_name_matches"
-                             ] = "text"
-    ) -> List[str] | None:
+                             ] = "text",
+                             action: Literal["text_all", "text_child", "talkback_all", "talkback_child"] = "text_all") -> List[str] | None:
         """
-        Get all text from element
+        Get all text/talkback from element or screen
         """
+        if action == "text_all":
+            # Lấy toàn bộ text trên màn hình, xml lấy qua xpath sẽ trả về list element wrapper
+            # Tuy nhiên để nhanh và nhẹ, ta có thể dump hierarchy hoặc dùng xpath query
+            # Cách dùng uiautomator2 xpath:
+            nodes = self.device.xpath("//*[string-length(@text) > 0]").all()
+            return [node.text for node in nodes]
+            
+        elif action == "talkback_all":
+            nodes = self.device.xpath("//*[string-length(@content-desc) > 0]").all()
+            return [node.attrib.get("content-desc") for node in nodes]
+
+        # Với các action cần tìm element cha trước
         element = self.Find_element(name=name, type_=type_)
         if element:
-            print(element.sibling().count)
-            # parent = element.from_parent()
-            # print(len(parent.child()))
-            # if parent:
-            #     # Lấy tất cả các con của parent (tức là sibling của element)
-            #     all_children = parent.child()
-            #     return [el.info.get("text") for el in all_children if el.info.get("text")]
+            # Lấy tất cả con của element hiện tại (Children thực sự)
+            # Lưu ý: Logic cũ của bạn là lấy sibling (parent -> child), còn đây mình lấy child của chính element đó
+            children = element.child()
+            
+            if action == "text_child":
+                return [el.info.get("text") for el in children if el.info.get("text")]
+            
+            elif action == "talkback_child":
+                return [el.info.get("contentDescription") for el in children if el.info.get("contentDescription")]
+                
         return None
     def Find_element(self, 
                      name: str, 
@@ -84,8 +100,7 @@ class qa_automation:
                          "resource_id", "resource_id_matches", 
                          "xpath", 
                          "class_name", "class_name_matches"
-                     ] = "text"
-    ) -> object:
+                     ] = "text") -> object:
         selector_map = {
             "text": "text",
             "text_contains": "textContains",
@@ -125,8 +140,7 @@ class qa_automation:
                   "xpath", 
                   "class_name", "class_name_matches"
               ] = "text", 
-              long_: bool = False
-    ) -> bool:
+              long_: bool = False) -> bool:
         element = self.Find_element(name=name, type_=type_)
         if element:
             if long_:
@@ -162,8 +176,7 @@ class qa_automation:
                                ] = "text",
                                type_scroll: Literal["up", "down", "left", "right", "top", "bottom"] = "up",
                                max_scrolls=20, delay=0.5, scale: float = 0.9, box: list[int, int, int, int] = None,
-                               duration: float = None, steps: float = None
-    ) -> bool:
+                               duration: float = None, steps: float = None) -> bool:
         last_ui = ""
         for _ in range(max_scrolls):
             element = self.Find_element(name=name, type_=type_)
@@ -189,8 +202,7 @@ class qa_automation:
                                  ] = "text",
                                  type_scroll: Literal["up", "down", "left", "right", "top", "bottom"] = "up",
                                  max_scrolls=20, delay=0.5, scale: float = 0.9, box: list[int, int, int, int] = None,
-                                 duration: float = None, steps: float = None
-    ) -> bool:
+                                 duration: float = None, steps: float = None) -> bool:
         element = self.scroll_to_find_element(name, type_, type_scroll, max_scrolls, delay, scale, box, duration, steps)
         if element:
             element.click()
@@ -207,8 +219,7 @@ class qa_automation:
                                     ] = "text",
                                     type_scroll: Literal["updown", "letfright"] = "updown",                           
                                     max_scrolls=20, delay=0.5, scale: float = 0.9, box: list[int, int, int, int] = None,
-                                    duration: float = None, steps: float = None
-    ) -> bool:
+                                    duration: float = None, steps: float = None) -> bool:
         if type_scroll == "updown":
             element = self.scroll_to_find_element(name, type_, "up", max_scrolls, delay, scale, box, duration, steps)
             if element:
@@ -240,8 +251,7 @@ class qa_automation:
                                           ] = "text",
                                           type_scroll: Literal["updown", "letfright"] = "updown",                           
                                           max_scrolls=20, delay=0.5, scale: float = 0.9, box: list[int, int, int, int] = None,
-                                          duration: float = None, steps: float = None
-    ) -> bool:
+                                          duration: float = None, steps: float = None) -> bool:
         element = self.scroll_up_down_find_element(name, type_, type_scroll, max_scrolls, delay, scale, box, duration, steps)
         if element:
             element.click()
