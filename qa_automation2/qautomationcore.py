@@ -22,8 +22,19 @@ class qa_automation:
     #         if element.wait:
     #             return element
     #         return False
-    def abd_shell(self, command:str)-> str:
-        return self.device.shell(command)
+    def abd_shell(self, command:str) -> str | bool:
+        res = self.device.shell(command)
+        if res.exit_code == 0:
+            return res.output.strip()
+        return False
+    def start_app(self, package_name:str) -> bool:
+        if self.device.app_start(package_name):
+            return True
+        return False
+    def stop_app(self, package_name:str) -> bool:
+        if self.device.app_stop(package_name):
+            return True
+        return False
 
     def get_info_element(self, element,
                                 type_get:Literal["bounds", "childCount", "className", "contentDescription",
@@ -68,9 +79,6 @@ class qa_automation:
         Get all text/talkback from element or screen
         """
         if action == "text_all":
-            # Lấy toàn bộ text trên màn hình, xml lấy qua xpath sẽ trả về list element wrapper
-            # Tuy nhiên để nhanh và nhẹ, ta có thể dump hierarchy hoặc dùng xpath query
-            # Cách dùng uiautomator2 xpath:
             nodes = self.device.xpath("//*[string-length(@text) > 0]").all()
             return [node.text for node in nodes]
             
@@ -78,11 +86,8 @@ class qa_automation:
             nodes = self.device.xpath("//*[string-length(@content-desc) > 0]").all()
             return [node.attrib.get("content-desc") for node in nodes]
 
-        # Với các action cần tìm element cha trước
         element = self.Find_element(name=name, type_=type_)
-        if element:
-            # Lấy tất cả con của element hiện tại (Children thực sự)
-            # Lưu ý: Logic cũ của bạn là lấy sibling (parent -> child), còn đây mình lấy child của chính element đó
+        if element: 
             children = element.child()
             
             if action == "text_child":
