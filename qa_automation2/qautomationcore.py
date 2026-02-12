@@ -74,6 +74,7 @@ class qa_automation:
                                  "xpath", 
                                  "class_name", "class_name_matches"
                              ] = "text",
+                             index: int = 0,
                              action: Literal["text_all", "text_child", "talkback_all", "talkback_child"] = "text_all") -> List[str] | None:
         """
         Get all text/talkback from element or screen
@@ -86,7 +87,7 @@ class qa_automation:
             nodes = self.device.xpath("//*[string-length(@content-desc) > 0]").all()
             return [node.attrib.get("content-desc") for node in nodes]
 
-        element = self.Find_element(name=name, type_=type_)
+        element = self.Find_element(name=name, type_=type_, index=index)
         if element: 
             children = element.child()
             
@@ -105,7 +106,8 @@ class qa_automation:
                          "resource_id", "resource_id_matches", 
                          "xpath", 
                          "class_name", "class_name_matches"
-                     ] = "text") -> object:
+                     ] = "text",
+                     index: int = 0) -> object:
         selector_map = {
             "text": "text",
             "text_contains": "textContains",
@@ -128,8 +130,12 @@ class qa_automation:
             kwargs = {selector_map[type_]: name}
             element = self.device(**kwargs)
         else:
-            print(f'Type "{type_}" not supported. Supported keys: {", ".join(selector_map.keys())}, xpath')
+            # print(f'Type "{type_}" not supported. Supported keys: {", ".join(selector_map.keys())}, xpath')
+            self.logger.error(f'Type "{type_}" not supported. Supported keys: {", ".join(selector_map.keys())}, xpath')
             return False
+
+        if index is not None and index >= 0:
+            element = element[index]
 
         if element.exists:
             return element
@@ -145,8 +151,9 @@ class qa_automation:
                   "xpath", 
                   "class_name", "class_name_matches"
               ] = "text", 
+              index: int = 0,
               long_: bool = False) -> bool:
-        element = self.Find_element(name=name, type_=type_)
+        element = self.Find_element(name=name, type_=type_, index=index)
         if element:
             if long_:
                 element.long_click()
@@ -179,12 +186,13 @@ class qa_automation:
                                    "xpath", 
                                    "class_name", "class_name_matches"
                                ] = "text",
+                               index: int = 0,
                                type_scroll: Literal["up", "down", "left", "right", "top", "bottom"] = "up",
                                max_scrolls=20, delay=0.5, scale: float = 0.9, box: list[int, int, int, int] = None,
                                duration: float = None, steps: float = None) -> bool:
         last_ui = ""
         for _ in range(max_scrolls):
-            element = self.Find_element(name=name, type_=type_)
+            element = self.Find_element(name=name, type_=type_, index=index)
             if element:
                 return element
             current_ui = self.device.dump_hierarchy(compressed=True)
@@ -205,10 +213,11 @@ class qa_automation:
                                      "xpath", 
                                      "class_name", "class_name_matches"
                                  ] = "text",
+                                 index: int = 0,
                                  type_scroll: Literal["up", "down", "left", "right", "top", "bottom"] = "up",
                                  max_scrolls=20, delay=0.5, scale: float = 0.9, box: list[int, int, int, int] = None,
                                  duration: float = None, steps: float = None) -> bool:
-        element = self.scroll_to_find_element(name, type_, type_scroll, max_scrolls, delay, scale, box, duration, steps)
+        element = self.scroll_to_find_element(name, type_, index, type_scroll, max_scrolls, delay, scale, box, duration, steps)
         if element:
             element.click()
             return True
@@ -222,22 +231,23 @@ class qa_automation:
                                         "xpath", 
                                         "class_name", "class_name_matches"
                                     ] = "text",
+                                    index: int = 0,
                                     type_scroll: Literal["updown", "letfright"] = "updown",                           
                                     max_scrolls=20, delay=0.5, scale: float = 0.9, box: list[int, int, int, int] = None,
                                     duration: float = None, steps: float = None) -> bool:
         if type_scroll == "updown":
-            element = self.scroll_to_find_element(name, type_, "up", max_scrolls, delay, scale, box, duration, steps)
+            element = self.scroll_to_find_element(name, type_, index, "up", max_scrolls, delay, scale, box, duration, steps)
             if element:
                 return element
-            element = self.scroll_to_find_element(name, type_,"down", max_scrolls, delay, scale, box, duration, steps)
+            element = self.scroll_to_find_element(name, type_, index, "down", max_scrolls, delay, scale, box, duration, steps)
             if element:
                 return element
             return False
         elif type_scroll == "letfright":
-            element = self.scroll_to_find_element(name, type_, "left", max_scrolls, delay, scale, box, duration, steps)
+            element = self.scroll_to_find_element(name, type_, index, "left", max_scrolls, delay, scale, box, duration, steps)
             if element:
                 return element
-            element = self.scroll_to_find_element(name, type_,"right", max_scrolls, delay, scale, box, duration, steps)
+            element = self.scroll_to_find_element(name, type_, index, "right", max_scrolls, delay, scale, box, duration, steps)
             if element:
                 return element
             return False
@@ -254,10 +264,11 @@ class qa_automation:
                                               "xpath", 
                                               "class_name", "class_name_matches"
                                           ] = "text",
+                                          index: int = 0,
                                           type_scroll: Literal["updown", "letfright"] = "updown",                           
                                           max_scrolls=20, delay=0.5, scale: float = 0.9, box: list[int, int, int, int] = None,
                                           duration: float = None, steps: float = None) -> bool:
-        element = self.scroll_up_down_find_element(name, type_, type_scroll, max_scrolls, delay, scale, box, duration, steps)
+        element = self.scroll_up_down_find_element(name, type_, index, type_scroll, max_scrolls, delay, scale, box, duration, steps)
         if element:
             element.click()
             return True
