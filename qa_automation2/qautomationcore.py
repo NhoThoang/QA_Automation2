@@ -506,5 +506,153 @@ class qa_automation:
         except Exception as e:
             self.logger.error(f"Error zooming {action}: {e}")
             return False
+            
+    # --- Advanced Gestures ---
+    def drag_element(self, 
+                     source_name: str, 
+                     dest_name: str = None, 
+                     dest_x: int = None, 
+                     dest_y: int = None,
+                     duration: float = 0.5,
+                     type_: str = "text") -> bool:
+        """
+        Drag an element to another element or coordinates.
+        """
+        try:
+            source = self.Find_element(source_name, type_)
+            if not source:
+                self.logger.error(f"Source element '{source_name}' not found for drag")
+                return False
+            
+            if dest_name:
+                dest = self.Find_element(dest_name, type_)
+                if dest:
+                    source.drag_to(dest, duration=duration)
+                    return True
+                else: 
+                     self.logger.error(f"Destination element '{dest_name}' not found")
+                     return False
+            elif dest_x is not None and dest_y is not None:
+                source.drag_to(dest_x, dest_y, duration=duration)
+                return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Error dragging: {e}")
+            return False
+
+    def double_click(self, name: str, type_: str = "text") -> bool:
+        """ Double click an element """
+        el = self.Find_element(name, type_)
+        if el:
+            el.click()
+            el.click() # uiautomator2 doesn't have explicit double_click on object, so we simulate
+            # or use gesture: self.device.double_click(x, y) if we get bounds
+            return True
+        return False
+
+    # --- System Operations ---
+    def capture_screenshot(self, filename: str) -> bool:
+        """ Capture screenshot to file """
+        try:
+            self.device.screenshot(filename)
+            self.logger.info(f"Screenshot saved to {filename}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Error taking screenshot: {e}")
+            return False
+
+    def open_system_ui(self, target: Literal["notification", "quick_settings"]) -> bool:
+        """ Open notification shade or quick settings """
+        try:
+            if target == "notification":
+                self.device.open_notification()
+            elif target == "quick_settings":
+                self.device.open_quick_settings()
+            return True
+        except Exception as e:
+             self.logger.error(f"Error opening {target}: {e}")
+             return False
+
+    def set_clipboard(self, text: str) -> bool:
+        """ Set clipboard content """
+        try:
+            self.device.clipboard = text
+            return True
+        except Exception as e:
+            self.logger.error(f"Error setting clipboard: {e}")
+            return False
+
+    def get_clipboard(self) -> str | bool:
+        """ Get clipboard content """
+        try:
+            return self.device.clipboard
+        except Exception as e:
+            self.logger.error(f"Error getting clipboard: {e}")
+            return False
+
+    def rotate_screen(self, orientation: Literal["n", "l", "r", "u"] = "n") -> bool:
+        """ 
+        Rotate screen: n(natural), l(left), r(right), u(upside down) 
+        """
+        try:
+            self.device.set_orientation(orientation)
+            return True
+        except Exception as e:
+            self.logger.error(f"Error rotating screen: {e}")
+            return False
+
+    # --- Debug & Toast ---
+    def get_hierarchy(self) -> str | bool:
+        """ Dump UI hierarchy as XML string """
+        try:
+             return self.device.dump_hierarchy()
+        except Exception as e:
+             self.logger.error(f"Error dumping hierarchy: {e}")
+             return False
+
+    def get_toast(self, wait_timeout: float = 10.0) -> str | None:
+        """ Get the latest toast message """
+        try:
+            # wait for toast and return its message
+            # message = self.device.toast.get_message(wait_timeout, 5.0, "default") 
+            # Note: uiautomator2 toast handling might vary by version
+            return self.device.toast.get_message(wait_timeout, 5.0, "default")
+        except Exception as e:
+            self.logger.error(f"Error getting toast: {e}")
+            return None
+
+    # --- Watcher ---
+    def register_watcher(self, name: str, condition_text: str, action_text: str = None, click_action: bool = True):
+        """
+        Register a watcher to auto-handle UI interruptions (like popups).
+        - condition_text: Text to look for (e.g., "Allow")
+        - action_text: Text to look for next (if separate) or same as condition
+        - click_action: Click the found text?
+        """
+        try:
+             if click_action:
+                 if action_text:
+                     self.device.watcher(name).when(condition_text).click(action_text)
+                 else:
+                     self.device.watcher(name).when(condition_text).click()
+             else:
+                 # Just register existence check or press key
+                 self.device.watcher(name).when(condition_text).press("back")
+             
+             self.device.watcher.start()
+             self.logger.info(f"Watcher {name} registered for '{condition_text}'")
+        except Exception as e:
+             self.logger.error(f"Error registering watcher: {e}")
+
+    def remove_watcher(self, name: str):
+        """ Remove a registered watcher """
+        try:
+            self.device.watcher.remove(name)
+        except Exception:
+            pass
+    
+    def remove_all_watchers(self):
+        """ Remove all watchers """
+        self.device.watcher.remove()
     
 

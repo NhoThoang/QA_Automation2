@@ -122,3 +122,47 @@ Retrieves text or content descriptions from all matching elements or children of
 
 #### `get_info_element`
 Extracts specific properties (bounds, text, checked, enabled, etc.) from an element object.
+
+### 6. Advanced Gestures & Interactions
+
+#### `drag_element`
+Drags an element to another element or specific coordinates.
+*   **Parameters:** `source_name`, `dest_name` (or `dest_x`, `dest_y`), `duration`.
+
+#### `double_click`
+Double clicks on an element.
+*   **Parameters:** `name`, `type_`.
+
+### 7. System Operations
+
+#### `capture_screenshot`
+Captures a screenshot and saves it to a file.
+*   **Parameters:** `filename` (path to save).
+
+#### `open_system_ui`
+Opens system panels.
+*   **Parameters:** `target` (`notification`, `quick_settings`).
+
+#### `set_clipboard` / `get_clipboard`
+Sets or retrieves text from the device clipboard.
+
+#### `rotate_screen`
+Forces screen orientation.
+*   **Parameters:** `orientation` (`n`=natural, `l`=left, `r`=right, `u`=upside down).
+
+### 8. Debug & Watchers
+
+#### `get_hierarchy`
+Returns the current UI hierarchy as an XML string. Useful for debugging layout.
+
+#### `get_toast`
+Retrieves the message from a toast notification (transient popup).
+*   **Parameters:** `wait_timeout`.
+
+#### `register_watcher`
+Registers a watcher to automatically handle popups or specific text.
+*   **Parameters:** `name`, `condition_text`, `action_text` (what to click), `click_action` (bool).
+*   **Example:** `qa.register_watcher("ANR", "Application not responding", "OK")`
+
+#### `remove_watcher` / `remove_all_watchers`
+Removes specific or all registered watchers.
