@@ -15,13 +15,24 @@ class qa_automation:
             self.logger.error(f"Activity {activity_name} did not load within {timeout} seconds.")
             return False
         return True
-    # def wait_for_element(self, name:str, type_:Literal["text", "talkback", "resource_id", "xpath"]="text", timeout:int=10)-> bool:
-    #     if type_ == "text":
-    #         element = self.device(text=name)
-    #         element.wait_timeout = timeout
-    #         if element.wait:
-    #             return element
-    #         return False
+    def wait_for_element(self, 
+                         name: str | List[str], 
+                         type_: Literal[
+                             "text", "text_contains", "text_matches", "text_startswith", 
+                             "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
+                             "resource_id", "resource_id_matches", 
+                             "xpath", 
+                             "class_name", "class_name_matches"
+                         ] = "text",
+                         timeout: int = 10,
+                         index: int = 0) -> object:
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            element = self.Find_element(name, type_, index)
+            if element:
+                return element
+            time.sleep(0.5)
+        return False
     def abd_shell(self, command:str) -> str | bool:
         res = self.device.shell(command)
         if res.exit_code == 0:
@@ -35,6 +46,19 @@ class qa_automation:
         if self.device.app_stop(package_name):
             return True
         return False
+
+    def press_key(self, key: str) -> bool:
+        """
+        Press a key like 'home', 'back', 'left', 'right', 'up', 'down', 'center',
+        'menu', 'search', 'enter', 'delete', 'recent', 'volume_up', 'volume_down',
+        'volume_mute', 'camera', 'power'.
+        """
+        try:
+            self.device.press(key)
+            return True
+        except Exception as e:
+            self.logger.error(f"Error pressing key {key}: {e}")
+            return False
 
     def get_info_element(self, element,
                                 type_get:Literal["bounds", "childCount", "className", "contentDescription",
@@ -280,5 +304,207 @@ class qa_automation:
             element.click()
             return True
         return False
+
+    def send_text(self, 
+                  text: str, 
+                  name: str | List[str] = None, 
+                  type_: Literal[
+                      "text", "text_contains", "text_matches", "text_startswith", 
+                      "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
+                      "resource_id", "resource_id_matches", 
+                      "xpath", 
+                      "class_name", "class_name_matches"
+                  ] = "text",
+                  index: int = 0,
+                  clear: bool = False,
+                  press_enter: bool = False,
+                  click_before: bool = True) -> bool:
+        """
+        Send text to an element or the currently focused element.
+        - If name is provided, it finds the element using Find_element.
+        - If clear is True, it clears the text before sending the new text or send_keys.
+        - If click_before is True, it clicks on the element before sending text.
+        - If press_enter is True, it presses the Enter key after sending the text.
+        """
+        if name:
+            element = self.Find_element(name=name, type_=type_, index=index)
+            if element:
+                if click_before:
+                    element.click()
+                if clear:
+                    element.clear_text()
+                element.set_text(text)
+                if press_enter:
+                    self.device.press("enter")
+                return True
+            else:
+                self.logger.error(f"Element not found to send text: {name}")
+                return False
+        else:
+            if clear:
+                 self.device.clear_text()
+            self.device.send_keys(text)
+            if press_enter:
+                self.device.press("enter")
+            return True
+
+    def manage_screen(self, action: Literal["on", "off", "check"] = "check") -> bool:
+        """
+        Manage screen state: check if on, turn on, or turn off.
+        """
+        if action == "check":
+            return self.device.info.get('screenOn')
+        elif action == "on":
+             self.device.screen_on()
+             return True
+        elif action == "off":
+             self.device.screen_off()
+             return True
+        return False
+    
+    def click_element_relative(self, 
+                               anchor_text: str, 
+                               target_type: Literal["radio", "checkbox", "button", "text", "edit", "switch"] = "radio", 
+                               direction: Literal["left", "right", "up", "down", "sibling"] = "right",
+                               timeout: int = 5) -> bool:
+        """
+        Click an element relative to an anchor text.
+        This is useful for forms where labels are static but inputs have dynamic IDs.
+        
+        Usage:
+        qa.click_element_relative("Gender", "radio", "right") -> Finds "Gender", clicks radio button to its right.
+        qa.click_element_relative("Enable Notifications", "switch", "right") -> Finds text, clicks switch.
+        """
+        # Map common types to standard/common Android classes
+        # If target_type is not in map, it is treated as a raw class name or resource-id part if needed, 
+        # but for simplicity here we assume it's a class map or raw class name.
+        class_map = {
+            "radio": "android.widget.RadioButton",
+            "checkbox": "android.widget.CheckBox",
+            "switch": "android.widget.Switch",
+            "button": "android.widget.Button",
+            "text": "android.widget.TextView",
+            "edit": "android.widget.EditText",
+            "image": "android.widget.ImageView"
+        }
+        
+        target_class = class_map.get(target_type)
+        if not target_class:
+            # If not in map, assume user passed a valid class name (e.g. android.view.View)
+            target_class = target_type
+
+        # Find anchor
+        anchor = self.device(text=anchor_text)
+        if not anchor.exists(timeout=timeout):
+           self.logger.error(f"Anchor text '{anchor_text}' not found")
+           return False
+
+        # Find relative target
+        target = None
+        if direction == "left":
+            target = anchor.left(className=target_class)
+        elif direction == "right":
+            target = anchor.right(className=target_class)
+        elif direction == "up":
+            target = anchor.up(className=target_class)
+        elif direction == "down":
+            target = anchor.down(className=target_class)
+        elif direction == "sibling":
+            # Sibling is tricky, uiautomator2 usually implies sibling by subsequent selection from parent 
+            # or by just chaining if possible. 
+            # Ideally: anchor.sibling(className=...) might not exist directly as 'sibling' method in basic wrapper, 
+            # but we can use `right` or `left` or XPath if needed. 
+            # However, uiautomator2 has .sibling() selector support in chaining:
+            target = anchor.sibling(className=target_class)
+        
+        if target and target.exists:
+            target.click()
+            return True
+        
+        self.logger.error(f"Target '{target_type}' ({target_class}) not found {direction} of '{anchor_text}'")
+        return False
+    
+    def click_child_element(self, 
+                            parent_name: str, 
+                            child_name: str, 
+                            parent_type: Literal[
+                                "text", "text_contains", "resource_id", "xpath", "class_name"
+                            ] = "resource_id",
+                            child_type: Literal["text", "resource_id", "class_name", "description"] = "text",
+                            index: int = 0,
+                            child_index: int = 0) -> bool:
+        """
+        Find a parent element and click a specific child inside it.
+        Example: Find a list item (parent) by its ID/XPath and click the 'Delete' button (child) inside it.
+        child_index uses 'instance' in uiautomator2 to select the Nth matching child.
+        """
+        # 1. Find the parent element object first using existing Find_element
+        # Note: Find_element returns a UIObject but might be wrapped or pure. 
+        # Assuming Find_element returns a uiautomator2 UIObject.
+        parent = self.Find_element(name=parent_name, type_=parent_type, index=index)
+        
+        if not parent:
+            self.logger.error(f"Parent element '{parent_name}' not found")
+            return False
+
+        # 2. Define child selector based on type
+        # We need to construct arguments for the .child() method of uiautomator2
+        child_kwargs = {}
+        if child_type == "text":
+            child_kwargs["text"] = child_name
+        elif child_type == "resource_id":
+            child_kwargs["resourceId"] = child_name
+        elif child_type == "class_name":
+            child_kwargs["className"] = child_name
+        elif child_type == "description":
+            child_kwargs["description"] = child_name
+            
+        if child_index > 0:
+            child_kwargs["instance"] = child_index
+
+        # 3. Find child inside parent and click
+        try:
+            # The parent object from uiautomator2 supports .child(**kwargs)
+            child = parent.child(**child_kwargs)
+            if child.exists:
+                child.click()
+                return True
+            else:
+                self.logger.error(f"Child '{child_name}' ({child_type}) index {child_index} not found inside parent")
+                return False
+        except Exception as e:
+            self.logger.error(f"Error clicking child: {e}")
+            return False
+            
+    def zoom_screen(self, 
+                    action: Literal["in", "out"] = "out", 
+                    percent: int = 100, 
+                    steps: int = 50,
+                    element_name: str | List[str] = None, 
+                    element_type: str = "resource_id"
+                    ) -> bool:
+        """
+        Perform zoom in/out (pinch) gesture on screen or specific element.
+        action: "in" (shrink) or "out" (expand)
+        """
+        try:
+            target = self.device
+            if element_name:
+                el = self.Find_element(element_name, element_type)
+                if el:
+                    target = el
+                else: 
+                     return False
+
+            if action == "in":
+                # pinch_in: 2 fingers move closer
+                target.pinch_in(percent=percent, steps=steps)
+            elif action == "out":
+                 # pinch_out: 2 fingers move apart
+                target.pinch_out(percent=percent, steps=steps)
+            return True
+        except Exception as e:
+            self.logger.error(f"Error zooming {action}: {e}")
+            return False
     
 

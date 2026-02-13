@@ -1,94 +1,124 @@
-# QA Automation 2 🚀
+# QA Automation Core Documentation
 
-Dự án **QA Automation2** là một hệ thống tự động hóa kiểm thử cho ứng dụng di động mạnh mẽ, được phát triển dựa trên thư viện [uiautomator2](https://github.com/openatx/uiautomator2). Phiên bản này hỗ trợ tìm kiếm phần tử linh hoạt với nhiều chiến lược (Startswith, Contains, Regex...) và quản lý Log chuyên nghiệp.
+This document provides a comprehensive guide to using the `qa_automation` class within `qautomationcore.py`. This class is a wrapper around `uiautomator2` designed to simplify Android UI automation tasks.
 
-## 📦 Yêu cầu & Cài đặt
-
-*   **Python:** >= 3.8
-*   **Android SDK Platform-Tools** (adb)
-
-Cài đặt thư viện:
-
-```bash
-pip install qa_automation2
-```
-
-
-## 🚀 Tính năng nổi bật
-
-*   **Tìm kiếm phần tử nâng cao:** Hỗ trợ Regex ($), Contains (*), StartsWith (^) cho cả Text, Description và Resource ID.
-*   **Log Rotation:** Hệ thống log tự động xoay vòng file (Max 5MB/file, giữ lại 3 file backup).
-*   **Auto Scroll:** Tự động cuộn thông minh để tìm kiếm phần tử theo nhiều hướng (Up, Down, Left, Right).
-*   **Quản lý thiết bị:** Tự động kết nối và lấy thông tin thiết bị.
-
-## 📖 Hướng dẫn sử dụng
-
-### 1. Khởi tạo kết nối
+## Initialization
 
 ```python
-from qa_automation2 import qa_connect
+from qa_automation2.qautomationcore import qa_automation
 
-# Kết nối thiết bị đầu tiên tìm thấy và lưu log vào thư mục "logs"
-automation = qa_connect(log_dir="logs")
-
-# Hoặc kết nối thiết bị cụ thể qua Serial ID
-# automation = qa_connect(device_id="RFcn0w...", log_dir="custom_logs")
+# Initialize with a connected device
+# device: uiautomator2 device object
+# device_infor: dictionary containing device information (e.g., model)
+# log_dir: directory to save logs
+qa = qa_automation(device=d, device_infor={"model": "Pixel_4"}, log_dir="logs")
 ```
 
-### 2. Chiến lược Tìm kiếm (Selector Strategies)
+## Core Functions
 
-Hàm `Find_element` và các hàm tương tác hỗ trợ các loại `type_` sau để định vị phần tử chính xác hơn:
+### 1. Element Interaction
 
-| Loại (`type_`) | Ý nghĩa | Ví dụ Code |
-| :--- | :--- | :--- |
-| `text` | Chính xác tuyệt đối | `text="Login"` |
-| `text_contains` | Chứa chuỗi con | `textContains="Log"` |
-| `text_startswith` | Bắt đầu bằng chuỗi | `textStartsWith="Welcome"` |
-| `text_matches` | Biểu thức chính quy (Regex) | `textMatches="^Log.*"` |
-| `resource_id` | ID chính xác | `resourceId="com.app:id/btn"` |
-| `resource_id_matches` | ID theo Regex | `resourceIdMatches=".*btn_login$"` |
-| `talkback` | Content Description chính xác | `description="Home"` |
-| `talkback_contains` | Description chứa chuỗi | `descriptionContains="ome"` |
-| `talkback_startswith`| Description bắt đầu bằng | `descriptionStartsWith="Hom"` |
-| `talkback_matches` | Description theo Regex | `descriptionMatches="^Hom.*"` |
+#### `Find_element`
+Finds a UI element based on various criteria.
 
-### 3. Ví dụ Code
+*   **Parameters:**
+    *   `name`: The identifier string (text, resource-id, xpath, etc.) or a list of strings.
+    *   `type_`: The type of identifier. Options: `text`, `text_contains`, `resource_id`, `xpath`, `class_name`, `talkback`, etc.
+    *   `index`: Index of the element if multiple match (default 0).
+*   **Returns:** The UI object if found, otherwise `False`.
 
-**Click vào một phần tử có chứa chữ "Settings":**
-```python
-automation.Touch(name="Settings", type_="text_contains")
-```
+#### `wait_for_element`
+Waits for an element to appear within a timeout period.
 
-**Cuộn xuống tìm phần tử bắt đầu bằng "Chapter 1":**
-```python
-automation.scroll_to_find_element(
-    name="Chapter 1", 
-    type_="text_startswith", 
-    type_scroll="down",
-    max_scrolls=10
-)
-```
+*   **Parameters:** Same as `Find_element`, plus `timeout` (seconds).
+*   **Returns:** The UI object if found, otherwise `False`.
 
-**Lấy text của tất cả phần tử con khớp với Regex:**
-```python
-texts = automation.get_all_text_element(name="^[0-9]+$", type_="text_matches")
-```
+#### `Touch`
+Finds an element and performs a click (or long click).
 
-## ⚠️ Deprecation Warning
+*   **Parameters:** Same as `Find_element`, plus `long_` (bool) for long press.
+*   **Returns:** `True` if successful.
 
-Các hàm sau đây đã lỗi thời và sẽ bị xóa trong phiên bản tới:
+#### `send_text`
+Inputs text into an element or the currently focused field.
 
-*   `qa_infor.get_info_element`: Đã chuyển sang `qautomationcore.qa_automation.get_info_element`.
-    *   *Hành động:* Vui lòng cập nhật code để sử dụng hàm mới và tránh cảnh báo `DeprecationWarning`.
+*   **Parameters:**
+    *   `text`: The string to input.
+    *   `name`, `type_`, `index`: To find the target element (optional).
+    *   `clear`: Clears existing text before inputting.
+    *   `press_enter`: Presses the Enter key after inputting.
+    *   `click_before`: Clicks the element before inputting (default `True`).
 
-## 📂 Cấu trúc dự án
+#### `click_element_relative`
+Clicks an element located relative to an anchor text (e.g., click a specific Radio Button next to a label).
 
-*   `qa_automation2/`:
-    *   `qautomationcore.py`: Core xử lý chính (Find, Touch, Scroll...).
-    *   `loginfor.py`: Quản lý Logging (RotatingFileHandler).
-    *   `adbcore.py`: Tương tác ADB.
-    *   `qa_infor.py`: (Deprecated) Các tiện ích cũ.
-*   `logs/`: Thư mục lưu trữ log kiểm thử.
+*   **Parameters:**
+    *   `anchor_text`: The text to use as a reference point.
+    *   `target_type`: The type of element to click (`radio`, `checkbox`, `switch`, `button`, `edit`).
+    *   `direction`: Direction to look for the target (`left`, `right`, `up`, `down`, `sibling`).
+*   **Example:** `qa.click_element_relative("Gender", "radio", "right")`
 
-## 🤝 Liên hệ
-Mọi thắc mắc hoặc đóng góp vui lòng liên hệ qua email hoặc tạo issue trên repository.
+#### `click_child_element`
+Clicks a specific child element within a parent container.
+
+*   **Parameters:**
+    *   `parent_name`, `parent_type`: Identifiers for the parent container.
+    *   `child_name`, `child_type`: Identifiers for the child element inside the parent.
+    *   `child_index`: Index of the child if multiple match (default 0).
+
+### 2. Scroll & Search
+
+#### `scroll`
+Performs a simple scroll gesture.
+
+*   **Parameters:**
+    *   `type_`: Direction (`up`, `down`, `left`, `right`, `top`, `bottom`).
+    *   `scale`, `box`, `duration`, `steps`: Fine-tuning scroll behavior.
+
+#### `scroll_to_find_element`
+Scrolls in a specified direction until the element is found.
+
+*   **Parameters:** Element identifiers plus `type_scroll`, `max_scrolls`.
+
+#### `scroll_up_down_find_element` / `scroll_up_down_find_element_click`
+Scrolls one way (e.g., UP) then the other (e.g., DOWN) to find an element (and optionally click it).
+
+### 3. Device Control
+
+#### `press_key`
+Simulates a physical key press.
+
+*   **Keys:** `home`, `back`, `recent`, `enter`, `delete`, `volume_up`, `power`, etc.
+*   **Example:** `qa.press_key("home")`
+
+#### `manage_screen`
+Controls the device screen state.
+
+*   **Actions:** `check` (returns status), `on` (turn screen on), `off` (turn screen off).
+
+#### `zoom_screen`
+Performs a pinch-to-zoom gesture.
+
+*   **Parameters:**
+    *   `action`: `in` (zoom in/shrink), `out` (zoom out/expand).
+    *   `percent`: Size of the pinch gesture.
+    *   `element_name`: Optional, to perform zoom on a specific element.
+
+### 4. App & System
+
+#### `start_app` / `stop_app`
+Starts or stops an application by package name.
+
+#### `wait_activity`
+Waits for a specific app activity (screen) to load.
+
+#### `abd_shell`
+Executes an ADB shell command on the device.
+
+### 5. Information Retrieval
+
+#### `get_all_text_element`
+Retrieves text or content descriptions from all matching elements or children of an element.
+
+#### `get_info_element`
+Extracts specific properties (bounds, text, checked, enabled, etc.) from an element object.
