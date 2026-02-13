@@ -66,7 +66,7 @@ class qa_automation:
             return element.info.get(type_get)
         return None
     def get_all_text_element(self, 
-                             name: str = "", 
+                             name: str | List[str] = "", 
                              type_: Literal[
                                  "text", "text_contains", "text_matches", "text_startswith", 
                                  "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
@@ -99,7 +99,7 @@ class qa_automation:
                 
         return None
     def Find_element(self, 
-                     name: str, 
+                     name: str | List[str], 
                      type_: Literal[
                          "text", "text_contains", "text_matches", "text_startswith", 
                          "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
@@ -108,6 +108,13 @@ class qa_automation:
                          "class_name", "class_name_matches"
                      ] = "text",
                      index: int = 0) -> object:
+        if isinstance(name, list):
+            for n in name:
+                element = self.Find_element(name=n, type_=type_, index=index)
+                if element:
+                    return element
+            return False
+
         selector_map = {
             "text": "text",
             "text_contains": "textContains",
@@ -143,7 +150,7 @@ class qa_automation:
 
 
     def Touch(self, 
-              name: str, 
+              name: str | List[str], 
               type_: Literal[
                   "text", "text_contains", "text_matches", "text_startswith", 
                   "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
@@ -178,7 +185,7 @@ class qa_automation:
         else:
             return False        
     def scroll_to_find_element(self, 
-                               name: str, 
+                               name: str | List[str], 
                                type_: Literal[
                                    "text", "text_contains", "text_matches", "text_startswith", 
                                    "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
@@ -205,7 +212,7 @@ class qa_automation:
 
 
     def scroll_and_click_element(self, 
-                                 name: str, 
+                                 name: str | List[str], 
                                  type_: Literal[
                                      "text", "text_contains", "text_matches", "text_startswith", 
                                      "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
@@ -223,7 +230,7 @@ class qa_automation:
             return True
         return False
     def scroll_up_down_find_element(self, 
-                                    name: str, 
+                                    name: str | List[str], 
                                     type_: Literal[
                                         "text", "text_contains", "text_matches", "text_startswith", 
                                         "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
@@ -256,7 +263,7 @@ class qa_automation:
             return False
 
     def scroll_up_down_find_element_click(self, 
-                                          name: str, 
+                                          name: str | List[str], 
                                           type_: Literal[
                                               "text", "text_contains", "text_matches", "text_startswith", 
                                               "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 

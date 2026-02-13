@@ -1,6 +1,6 @@
 [project]
 name = "qa_automation2"
-version = "1.0.0"
+version = "1.0.1"
 description = "Automation test for phone"
 readme = "README.md"
 license = { text = "GPL-3.0-only" }
