@@ -193,19 +193,43 @@ class qa_automation:
         return False
 
     def scroll(self, type_:Literal["up", "down", "left", "right", "top", "bottom"]="up",
-            scale:float=0.9, box:list[int, int, int, int]=None,duration:float=None, steps:float=None):
-        if type_ =="top":
-            self.device(scrollable=True).scroll.toBeginning()
-        elif type_ =="bottom":
-            self.device(scrollable=True).scroll.toEnd()
-        elif type_=="up":
-            self.device.swipe_ext(direction=Direction.UP, scale=scale, box=box, duration=duration, steps=steps)
-        elif type_=="down":
-            self.device.swipe_ext(direction=Direction.DOWN, scale=scale, box=box, duration=duration, steps=steps)
-        elif type_ == "left":
-            self.device.swipe_ext(direction=Direction.LEFT, scale=scale, box=box, duration=duration, steps=steps)
-        elif type_ == "right":
-            self.device.swipe_ext(direction=Direction.RIGHT, scale=scale, box=box, duration=duration, steps=steps)
+            scale:float=0.9, box:list[int, int, int, int]=None, duration:float=None, steps:float=None):
+        """
+        Thực hiện cuộn màn hình. Nếu có 'box', sẽ cuộn trong phạm vi tọa độ đó.
+        box format: [left, top, right, bottom]
+        """
+        if type_ == "top":
+            if box:
+                # Cuộn lên đỉnh trong một vùng xác định
+                last_ui = ""
+                for _ in range(12): # Giới hạn số lần vuốt tránh lặp vô tận
+                    self.device.swipe_ext(direction=Direction.UP, scale=scale, box=box, duration=duration, steps=steps)
+                    curr_ui = self.device.dump_hierarchy(compressed=True)
+                    if curr_ui == last_ui: break
+                    last_ui = curr_ui
+            else:
+                self.device(scrollable=True).scroll.toBeginning()
+                
+        elif type_ == "bottom":
+            if box:
+                # Cuộn xuống đáy trong một vùng xác định
+                last_ui = ""
+                for _ in range(12):
+                    self.device.swipe_ext(direction=Direction.DOWN, scale=scale, box=box, duration=duration, steps=steps)
+                    curr_ui = self.device.dump_hierarchy(compressed=True)
+                    if curr_ui == last_ui: break
+                    last_ui = curr_ui
+            else:
+                self.device(scrollable=True).scroll.toEnd()
+                
+        elif type_ in ["up", "down", "left", "right"]:
+            dir_map = {
+                "up": Direction.UP,
+                "down": Direction.DOWN,
+                "left": Direction.LEFT,
+                "right": Direction.RIGHT
+            }
+            self.device.swipe_ext(direction=dir_map[type_], scale=scale, box=box, duration=duration, steps=steps)
         else:
             return False        
     def scroll_to_find_element(self, 
@@ -220,7 +244,10 @@ class qa_automation:
                                index: int = 0,
                                type_scroll: Literal["up", "down", "left", "right", "top", "bottom"] = "up",
                                max_scrolls=20, delay=0.5, scale: float = 0.9, box: list[int, int, int, int] = None,
-                               duration: float = None, steps: float = None) -> bool:
+                               duration: float = None, steps: float = None) -> object | bool:
+        """
+        Cuộn (có hỗ trợ box) dể tìm một phần tử.
+        """
         last_ui = ""
         for _ in range(max_scrolls):
             element = self.Find_element(name=name, type_=type_, index=index)
@@ -265,7 +292,10 @@ class qa_automation:
                                     index: int = 0,
                                     type_scroll: Literal["updown", "letfright"] = "updown",                           
                                     max_scrolls=20, delay=0.5, scale: float = 0.9, box: list[int, int, int, int] = None,
-                                    duration: float = None, steps: float = None) -> bool:
+                                    duration: float = None, steps: float = None) -> object | bool:
+        """
+        Cuộn cả hai chiều (Lên-Xuống hoặc Trái-Phải) trong một vùng (box) dể tìm phần tử.
+        """
         if type_scroll == "updown":
             element = self.scroll_to_find_element(name, type_, index, "up", max_scrolls, delay, scale, box, duration, steps)
             if element:
@@ -283,7 +313,7 @@ class qa_automation:
                 return element
             return False
         else:
-            print(f"{type_scroll} wrong please input correct updown or letfright")
+            self.logger.error(f"{type_scroll} sai định dạng. Vui lòng dùng 'updown' hoặc 'letfright'")
             return False
 
     def scroll_up_down_find_element_click(self, 
@@ -318,7 +348,8 @@ class qa_automation:
                   index: int = 0,
                   clear: bool = False,
                   press_enter: bool = False,
-                  click_before: bool = True) -> bool:
+                  click_before: bool = True,
+                  set_text: bool = False) -> bool:
         """
         Send text to an element or the currently focused element.
         - If name is provided, it finds the element using Find_element.
@@ -333,7 +364,10 @@ class qa_automation:
                     element.click()
                 if clear:
                     element.clear_text()
-                element.set_text(text)
+                if set_text:
+                    element.set_text(text)
+                else:
+                    element.send_keys(text)
                 if press_enter:
                     self.device.press("enter")
                 return True
@@ -343,7 +377,10 @@ class qa_automation:
         else:
             if clear:
                  self.device.clear_text()
-            self.device.send_keys(text)
+            if set_text:
+                self.device.set_text(text)
+            else:
+                self.device.send_keys(text)
             if press_enter:
                 self.device.press("enter")
             return True
@@ -361,6 +398,35 @@ class qa_automation:
              self.device.screen_off()
              return True
         return False
+
+    def manage_webview_support(self, action: Literal["on", "off"] = "on") -> bool:
+        """
+        Bật/Tắt các chế độ hỗ trợ bắt node nâng cao (WebView/Accessibility) qua ADB.
+        - on: Hiện khung debug layout, bật accessibility và script injection.
+        - off: Trả lại trạng thái bình thường cho thiết bị.
+        """
+        try:
+            if action == "on":
+                # 1. Hiện khung bao quanh các node để dễ debug
+                self.abd_shell("setprop debug.layout true")
+                # 2. Bật dịch vụ hỗ trợ (giúp u2 làm việc hiệu quả hơn)
+                self.abd_shell("settings put secure accessibility_enabled 1")
+                # 3. Cho phép injection hỗ trợ một số webview
+                self.abd_shell("settings put secure accessibility_script_injection 1")
+                # 4. Ép hệ thống cập nhật layout ngay lập tức
+                self.abd_shell("service call activity 42 s16 com.android.systemui") 
+                self.logger.info("Đã BẬT hỗ trợ WebView & Debug Layout.")
+            else:
+                # Trả về mặc định
+                self.abd_shell("setprop debug.layout false")
+                self.abd_shell("settings put secure accessibility_script_injection 0")
+                # Không nên tắt hoàn toàn accessibility_enabled vì có thể gây ngắt kết nối u2
+                self.abd_shell("service call activity 42 s16 com.android.systemui")
+                self.logger.info("Đã TẮT hỗ trợ WebView & Debug Layout.")
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi điều chỉnh webview_support: {e}")
+            return False
     
     def click_element_relative(self, 
                                anchor_text: str, 
@@ -655,4 +721,12 @@ class qa_automation:
         """ Remove all watchers """
         self.device.watcher.remove()
     
-
+    def wake_up_and_unlock(self) -> bool:
+        """ Wake up and unlock the device """
+        try:
+            self.device.screen_on()
+            self.device.unlock()
+            return True
+        except Exception as e:
+            self.logger.error(f"Error waking up and unlocking device: {e}")
+            return False
