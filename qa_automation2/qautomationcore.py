@@ -1,4 +1,4 @@
-import time, sys
+import time, sys, os
 from typing import Literal, List
 from uiautomator2 import Direction
 import uiautomator2 as u2
@@ -47,7 +47,9 @@ class qa_automation:
             return True
         return False
 
-    def press_key(self, key: str) -> bool:
+    def press_key(self, key: Literal["home", "back", "left", "right", "up", "down", "center",
+        "menu", "search", "enter", "delete", "recent", "volume_up", "volume_down",
+        "volume_mute", "camera", "power"]) -> bool:
         """
         Press a key like 'home', 'back', 'left', 'right', 'up', 'down', 'center',
         'menu', 'search', 'enter', 'delete', 'recent', 'volume_up', 'volume_down',
@@ -171,6 +173,58 @@ class qa_automation:
         if element.exists:
             return element
         return False
+
+    def Find_elements(self, 
+                      name: str | List[str], 
+                      type_: Literal[
+                          "text", "text_contains", "text_matches", "text_startswith", 
+                          "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
+                          "resource_id", "resource_id_matches", 
+                          "xpath", 
+                          "class_name", "class_name_matches"
+                      ] = "text") -> list:
+        """
+        Tìm tất cả các phần tử trên màn hình thỏa mãn điều kiện.
+        Trả về một mảng (list) chứa các object của uiautomator2.
+        Nếu name là list, hộp trả về tất cả kết quả khớp với bất kỳ name nào trong list.
+        """
+        if isinstance(name, list):
+            result = []
+            for n in name:
+                result.extend(self.Find_elements(name=n, type_=type_))
+            return result
+
+        selector_map = {
+            "text": "text",
+            "text_contains": "textContains",
+            "text_matches": "textMatches",
+            "text_startswith": "textStartsWith",
+            "resource_id": "resourceId",
+            "resource_id_matches": "resourceIdMatches",
+            "talkback": "description",
+            "talkback_contains": "descriptionContains",
+            "talkback_matches": "descriptionMatches",
+            "talkback_startswith": "descriptionStartsWith",
+            "class_name": "className",
+            "class_name_matches": "classNameMatches"
+        }
+        
+        elements = []
+        if type_ == "xpath":
+            nodes = self.device.xpath(name).all()
+            # xpath.all() của uiautomator2 mặc định trả về list các XMLElement
+            elements = nodes
+        elif type_ in selector_map:
+            kwargs = {selector_map[type_]: name}
+            ui_objs = self.device(**kwargs)
+            # Quét qua lấy tất cả object khớp
+            count = len(ui_objs)
+            for i in range(count):
+                elements.append(ui_objs[i])
+        else:
+            self.logger.error(f'Type "{type_}" not supported in Find_elements.')
+            
+        return elements
 
 
     def Touch(self, 
@@ -729,4 +783,156 @@ class qa_automation:
             return True
         except Exception as e:
             self.logger.error(f"Error waking up and unlocking device: {e}")
+            return False
+
+    # --- Touch & Gesture Control ---
+    def touch_action(self, action: Literal["down", "move", "up"], x: int, y: int) -> bool:
+        """ Thực hiện thao tác trỏ/chạm (down/move/up) tại tọa độ (x, y) """
+        try:
+            if action == "down":
+                self.device.touch.down(x, y)
+            elif action == "move":
+                self.device.touch.move(x, y)
+            elif action == "up":
+                self.device.touch.up(x, y)
+            else:
+                self.logger.error(f"Hành động touch không hợp lệ: {action}")
+                return False
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi touch {action} tại ({x}, {y}): {e}")
+            return False
+
+    def get_element_center(self, 
+                           name: str | List[str], 
+                           type_: Literal[
+                               "text", "text_contains", "text_matches", "text_startswith", 
+                               "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
+                               "resource_id", "resource_id_matches", 
+                               "xpath", 
+                               "class_name", "class_name_matches"
+                           ] = "text",
+                           index: int = 0) -> tuple[int, int] | bool:
+        """ 
+        Tìm một element và trả về tọa độ trung tâm (x, y) của nó.
+        Rất hữu ích khi kết hợp với các hàm touch_down, touch_move, touch_up.
+        """
+        element = self.Find_element(name=name, type_=type_, index=index)
+        if element:
+            bounds = element.info.get("bounds")
+            if bounds:
+                center_x = (bounds['left'] + bounds['right']) // 2
+                center_y = (bounds['top'] + bounds['bottom']) // 2
+                return center_x, center_y
+        
+        name_str = ", ".join(name) if isinstance(name, list) else name
+        self.logger.error(f"Không tìm thấy tọa độ trung tâm cho element '{name_str}'")
+        return False
+
+    # --- App Management & Advanced Automation Features ---
+    def clear_app_data(self, package_name: str) -> bool:
+        """ Xóa sạch dữ liệu của ứng dụng (clear cache & data) """
+        try:
+            self.device.app_clear(package_name)
+            self.logger.info(f"Đã xóa dữ liệu app: {package_name}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi xóa dữ liệu app {package_name}: {e}")
+            return False
+
+    def get_current_app(self) -> dict | bool:
+        """ Trả về thông tin package và activity đang hiển thị trên cùng """
+        try:
+            return self.device.app_current()
+        except Exception as e:
+            self.logger.error(f"Lỗi khi lấy thông tin app hiện tại: {e}")
+            return False
+
+    def install_app(self, apk_path: str) -> bool:
+        """ Cài đặt ứng dụng từ file APK """
+        try:
+            self.device.app_install(apk_path)
+            self.logger.info(f"Đã cài đặt app từ: {apk_path}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi cài đặt app {apk_path}: {e}")
+            return False
+
+    def uninstall_app(self, package_name: str) -> bool:
+        """ Gỡ cài đặt ứng dụng """
+        try:
+            self.device.app_uninstall(package_name)
+            self.logger.info(f"Đã gỡ cài đặt app: {package_name}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi gỡ cài đặt app {package_name}: {e}")
+            return False
+
+    def wait_element_gone(self, 
+                          name: str | List[str], 
+                          type_: Literal[
+                              "text", "text_contains", "resource_id", "xpath", "class_name"
+                          ] = "text",
+                          timeout: int = 10) -> bool:
+        """ Chờ cho đến khi phần tử biến mất khỏi màn hình """
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            element = self.Find_element(name=name, type_=type_)
+            if not element:
+                return True
+            time.sleep(0.5)
+        self.logger.error(f"Element '{name}' vẫn tồn tại sau {timeout}s")
+        return False
+
+    def push_file(self, pc_path: str, device_path: str) -> bool:
+        """ Đẩy file từ máy tính sang thiết bị """
+        try:
+            self.device.push(pc_path, device_path)
+            self.logger.info(f"Đã đẩy file {pc_path} -> {device_path}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi đẩy file: {e}")
+            return False
+
+    def pull_file(self, device_path: str, pc_path: str) -> bool:
+        """ Kéo file từ thiết bị về máy tính """
+        try:
+            self.device.pull(device_path, pc_path)
+            self.logger.info(f"Đã kéo file {device_path} -> {pc_path}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi kéo file: {e}")
+            return False
+
+    def start_recording(self, pc_filename: str) -> bool:
+        """ 
+        Bắt đầu quay video màn hình. Video sẽ được lưu về máy tính (PC).
+        Cần gọi stop_recording() sau khi quay xong để xuất file.
+        Ví dụ pc_filename: "error_video.mp4"
+        """
+        try:
+            self.logger.info(f"Đang quay video. Nó sẽ lưu tại {pc_filename} trên PC khi gọi stop")
+            self.device.screenrecord(pc_filename) 
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi bắt đầu quay video: {e}")
+            return False
+
+    def stop_recording(self) -> bool:
+        """ Dừng quay video màn hình và tải file .mp4 về PC """
+        try:
+            self.device.screenrecord.stop()
+            self.logger.info("Đã dừng quay video và lưu thành công ở PC")
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi dừng quay video: {e}")
+            return False
+
+    def swipe(self, fx: int, fy: int, tx: int, ty: int, duration: float = 0.5) -> bool:
+        """ Thực hiện thao tác vuốt tĩnh (từ tọa độ fx,fy đến tx,ty) """
+        try:
+            self.device.swipe(fx, fy, tx, ty, duration=duration)
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi vuốt từ ({fx},{fy}) đến ({tx},{ty}): {e}")
             return False
