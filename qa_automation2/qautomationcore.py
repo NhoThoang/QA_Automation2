@@ -33,7 +33,7 @@ class qa_automation:
                 return element
             time.sleep(0.5)
         return False
-    def abd_shell(self, command:str) -> str | bool:
+    def adb_shell(self, command:str) -> str | bool:
         res = self.device.shell(command)
         if res.exit_code == 0:
             return res.output.strip()

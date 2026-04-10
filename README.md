@@ -19,7 +19,7 @@ qa = qa_automation(device=d, device_infor={"model": "Pixel_4"}, log_dir="logs")
 ### 1. Element Interaction
 
 #### `Find_element`
-Finds a UI element based on various criteria.
+Finds a single UI element based on various criteria.
 
 *   **Parameters:**
     *   `name`: The identifier string (text, resource-id, xpath, etc.) or a list of strings.
@@ -27,11 +27,28 @@ Finds a UI element based on various criteria.
     *   `index`: Index of the element if multiple match (default 0).
 *   **Returns:** The UI object if found, otherwise `False`.
 
+#### `Find_elements`
+Finds all matching UI elements on the screen.
+
+*   **Parameters:** Similar to `Find_element` but without `index`.
+*   **Returns:** A list of UI objects. If `name` is a list of strings, it aggregates and returns all matches.
+
 #### `wait_for_element`
 Waits for an element to appear within a timeout period.
 
 *   **Parameters:** Same as `Find_element`, plus `timeout` (seconds).
 *   **Returns:** The UI object if found, otherwise `False`.
+
+#### `wait_element_gone`
+Waits for an element to disappear from the screen within a timeout period.
+
+*   **Parameters:** `name`, `type_`, `timeout`.
+*   **Returns:** `True` if it successfully disappears, otherwise `False`.
+
+#### `get_element_center`
+Finds an element and returns its exact center coordinates (X, Y).
+
+*   **Returns:** A tuple `(center_x, center_y)` or `False` if not found.
 
 #### `Touch`
 Finds an element and performs a click (or long click).
@@ -109,6 +126,17 @@ Performs a pinch-to-zoom gesture.
 #### `start_app` / `stop_app`
 Starts or stops an application by package name.
 
+#### `clear_app_data`
+Clears the cache and data of an application (like a fresh reinstall).
+*   **Parameters:** `package_name`.
+
+#### `get_current_app`
+Retrieves information about the currently running app and activity on the screen.
+*   **Returns:** A dictionary with `package` and `activity` keys.
+
+#### `install_app` / `uninstall_app`
+Installs an app from a local APK path or uninstalls it by package name.
+
 #### `wait_activity`
 Waits for a specific app activity (screen) to load.
 
@@ -133,11 +161,27 @@ Drags an element to another element or specific coordinates.
 Double clicks on an element.
 *   **Parameters:** `name`, `type_`.
 
+#### `touch_action`
+Performs raw pointer/touch actions at specific screen coordinates.
+*   **Parameters:** `action` (`down`, `move`, `up`), `x`, `y`.
+
+#### `swipe`
+Performs a direct coordinate-to-coordinate swipe gesture.
+*   **Parameters:** `fx`, `fy` (from), `tx`, `ty` (to), `duration`.
+
 ### 7. System Operations
 
 #### `capture_screenshot`
-Captures a screenshot and saves it to a file.
-*   **Parameters:** `filename` (path to save).
+Captures a screenshot and saves it to a file on your PC.
+*   **Parameters:** `filename` (Absolute or relative path).
+
+#### `start_recording` / `stop_recording`
+Records the screen video. `start_recording` initiates the process, and `stop_recording` stops it and pulls the `.mp4` file directly to your PC.
+*   **Parameters:** `pc_filename` for starting the recording.
+
+#### `push_file` / `pull_file`
+Transfers files between the PC and the connected Android device.
+*   **Parameters:** `pc_path`, `device_path`.
 
 #### `open_system_ui`
 Opens system panels.
