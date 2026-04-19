@@ -16,7 +16,8 @@ class qa_automation:
             return False
         return True
     def wait_for_element(self, 
-                         name: str | List[str], 
+                         name:
+                          str | List[str], 
                          type_: Literal[
                              "text", "text_contains", "text_matches", "text_startswith", 
                              "talkback", "talkback_contains", "talkback_matches", "talkback_startswith", 
@@ -935,4 +936,16 @@ class qa_automation:
             return True
         except Exception as e:
             self.logger.error(f"Lỗi khi vuốt từ ({fx},{fy}) đến ({tx},{ty}): {e}")
+            return False
+
+    def rotate_screen(self, orientation: Literal["natural", "left", "right", "upsidedown"]) -> bool:
+        """ 
+        Xoay màn hình thiết bị 
+        orientation: "natural" (n), "left" (l), "right" (r), "upsidedown" (u)
+        """
+        try:
+            self.device.set_orientation(orientation)
+            return True
+        except Exception as e:
+            self.logger.error(f"Lỗi khi xoay màn hình: {e}")
             return False
